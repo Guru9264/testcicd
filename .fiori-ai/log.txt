@@ -1,0 +1,743 @@
+2024-06-14T00:32:16.372Z [info] 
+==========LLM call for step "extractAppSkeleton":==========
+You help the user building a Fiori Elements application described in the user input.
+
+The application typically starts with a ListReport page showing the data of the base entity of the application in a table.
+Details of a specific table row are shown in the ObjectPage. This first ObjectPage is therefore based on the base entity of the application.
+An ObjectPage can contain one or more table sections based on to-many associations of its entity type.
+The details of a table section row can be shown in an another ObjectPage based on the associations target entity.
+
+Your task is to find the entities (with their associations) as well as the ObjectPages (with the associations they use in table sections) described in the user input below.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "entities": {
+      "type": "array",
+      "description": "Define all entities and their associations; entity properties will be determined later",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "UpperCamelCase, no spaces, plural, e.g. 'Orders'"
+          },
+          "label": {
+            "type": "string",
+            "description": "max two words, singular"
+          },
+          "associations": {
+            "type": "array",
+            "description": "Define all associations between entities",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Points to existing entity, value is entities.name"
+                },
+                "multiplicity": {
+                  "type": "string",
+                  "enum": [
+                    "one",
+                    "many"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "target",
+                "multiplicity"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "labelPlural": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "associations",
+          "labelPlural"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "baseEntity": {
+      "type": "string",
+      "description": "base entity of ListReport page (if present) and first ObjectPage"
+    },
+    "noListReportPage": {
+      "type": "boolean",
+      "description": "true: no ListReport page will generated, e.g. for applications which start with an (input enabled) Object Page to enter data"
+    },
+    "objectPages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string",
+            "description": "Entity that the ObjectPage is based on, the first ObjectPage is always based on base entity"
+          },
+          "tableSectionsAssociations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "to-many associations of page entity for table sections shown in the ObjectPage"
+          }
+        },
+        "required": [
+          "entityType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "description": "lowerCamelCase, no spaces allowed"
+    },
+    "applicationName": {
+      "type": "string",
+      "description": "lowerCamelCase, no spaces allowed"
+    }
+  },
+  "required": [
+    "entities",
+    "baseEntity",
+    "objectPages",
+    "namespace",
+    "applicationName"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Create an app with List of Request and Item Information
+</UserInput>
+
+----------Response:----------
+{
+  "entities": [
+    {
+      "name": "Requests",
+      "label": "Request",
+      "associations": [],
+      "labelPlural": "Requests"
+    },
+    {
+      "name": "Items",
+      "label": "Item",
+      "associations": [
+        {
+          "name": "request",
+          "target": "Requests",
+          "multiplicity": "one"
+        }
+      ],
+      "labelPlural": "Items"
+    }
+  ],
+  "baseEntity": "Requests",
+  "noListReportPage": false,
+  "objectPages": [
+    {
+      "entityType": "Requests",
+      "tableSectionsAssociations": [
+        "Items"
+      ]
+    }
+  ],
+  "namespace": "myApp",
+  "applicationName": "myApp"
+}
+2024-06-14T00:32:16.374Z [info] Step "switchBasedOnAppSkeleton": case 0 blocked! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[0]" : [{"type":"ListReport","entityType":"Requests"}]
+2024-06-14T00:32:16.374Z [info] Step "switchBasedOnAppSkeleton": case 1 blocked! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[0].type" : ["ListReport"]
+2024-06-14T00:32:16.374Z [info] Step "switchBasedOnAppSkeleton": no condition met - running default steps
+2024-06-14T00:32:22.287Z [info] 
+==========LLM call for step "extractEntitiesProperties":==========
+You help the user refining the DataModel for a Fiori Elements application described in the user input.
+
+The DataModel consists of the following entities and associations:
+- entity "Requests" (with to-many associations to "Items")
+- entity "Items" (with to-one association to "Requests")
+
+Your task is to find the properties for each entity.
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "elements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "camelCase, no spaces"
+          },
+          "type": {
+            "type": "string",
+            "description": "Allowed values: String(50), Boolean, Integer, Decimal, Double, Date, Time, DateTime, Timestamp; String length can vary - i.e. String(20)"
+          },
+          "key": {
+            "type": "boolean",
+            "description": "max. one optional key per entity, only if this element is a semantic key and can uniquely identify the instance"
+          },
+          "essentialElement": {
+            "type": "boolean",
+            "description": "'true' only if element is marked as essential'"
+          },
+          "additionalInfo": {
+            "type": "string",
+            "description": "All additional information from user input, e.g. user description, example values; also consider referenced parts in the user input"
+          }
+        },
+        "required": [
+          "entityName",
+          "name",
+          "type",
+          "additionalInfo"
+        ],
+        "additionalProperties": false
+      },
+      "description": "At least 5 realistic elements (unless explicitly specified)"
+    }
+  },
+  "required": [
+    "elements"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+<UserInput>
+Create an app with List of Request and Item Information
+</UserInput>
+
+----------Response:----------
+```json
+{
+  "elements": [
+    {
+      "entityName": "Requests",
+      "name": "requestId",
+      "type": "String(50)",
+      "key": true,
+      "essentialElement": true,
+      "additionalInfo": "Unique identifier for each request"
+    },
+    {
+      "entityName": "Requests",
+      "name": "requestName",
+      "type": "String(50)",
+      "essentialElement": true,
+      "additionalInfo": "Name of the request"
+    },
+    {
+      "entityName": "Requests",
+      "name": "requestDate",
+      "type": "Date",
+      "essentialElement": true,
+      "additionalInfo": "Date of the request"
+    },
+    {
+      "entityName": "Items",
+      "name": "itemId",
+      "type": "String(50)",
+      "key": true,
+      "essentialElement": true,
+      "additionalInfo": "Unique identifier for each item"
+    },
+    {
+      "entityName": "Items",
+      "name": "itemName",
+      "type": "String(50)",
+      "essentialElement": true,
+      "additionalInfo": "Name of the item"
+    }
+  ]
+}
+```
+2024-06-14T00:32:26.404Z [info] 
+==========LLM call for step "extractPropertyDetails":==========
+Here is a list of properties with name and description:
+
+Requests_requestId: Unique identifier for each request
+Requests_requestName: Name of the request
+Requests_requestDate: Date of the request
+Items_itemId: Unique identifier for each item
+Items_itemName: Name of the item
+
+For each property analyze the description.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "All values mentioned in the description. Those could be possible values or example values. Don't make up or invent any values"
+          },
+          "hasFixedValuesList": {
+            "type": "boolean",
+            "description": "Only limited list of values expected, e.g. elements representing types, statuses, categories, units, organizations"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "properties"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+----------Response:----------
+{
+  "properties": [
+    {
+      "name": "Requests_requestId",
+      "values": [],
+      "hasFixedValuesList": false
+    },
+    {
+      "name": "Requests_requestName",
+      "values": [],
+      "hasFixedValuesList": false
+    },
+    {
+      "name": "Requests_requestDate",
+      "values": [],
+      "hasFixedValuesList": false
+    },
+    {
+      "name": "Items_itemId",
+      "values": [],
+      "hasFixedValuesList": false
+    },
+    {
+      "name": "Items_itemName",
+      "values": [],
+      "hasFixedValuesList": false
+    }
+  ]
+}
+2024-06-14T00:32:26.405Z [info] Step "switchSimpleOrComplexApp": case 0 passed! Evaluation details:
+ - JSONPath "$.model.applications[0].pages[2]" : []
+ - JSONPath "$.userInput.lineCount" : [1]
+2024-06-14T00:32:26.405Z [info] Step "runFlowForSimpleApp": workflow "givenSkeletonExtractSimpleApp" started
+"
+2024-06-14T00:32:32.729Z [info] 
+==========LLM call for step "extractApplication":==========
+Here is a data model consisting of entities with their associations and elements:
+
+Entity "Requests"
+   Properties:
+       requestId: Unique identifier for each request
+       requestName: Name of the request
+       requestDate: Date of the request
+   Associations:
+       Items: association to entity Items
+Entity "Items"
+   Properties:
+       itemId: Unique identifier for each item
+       itemName: Name of the item
+   Associations:
+       request: association to entity Requests
+
+The user input below describes a Fiori Element application.
+Based on that description and the data model above, extract the details of the Fiori Element applications.
+
+You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
+
+"JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
+
+For example, the example "JSON Schema" instance {{"properties": {{"foo": {{"description": "a list of test words", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}
+would match an object with one required property, "foo". The "type" property specifies "foo" must be an "array", and the "description" property semantically describes it as "a list of test words". The items within "foo" must be strings.
+Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this example "JSON Schema". The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
+
+Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
+
+Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
+```json
+{
+  "type": "object",
+  "properties": {
+    "application": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ListReport",
+                  "ObjectPage"
+                ]
+              },
+              "entityType": {
+                "type": "string",
+                "description": "Entity that the page is based on"
+              },
+              "listReportContent": {
+                "type": "object",
+                "properties": {
+                  "filters": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "propertyPath for filters specified in user input. If not specified, empty array"
+                  },
+                  "loadDataOnAppLaunch": {
+                    "type": "string",
+                    "enum": [
+                      "Auto",
+                      "Disabled",
+                      "Enabled"
+                    ],
+                    "description": "'Auto': no explicit user input to load the data after start or an explicit user input to set InitialLoad for table to Auto; 'Disabled': An initial load of data does not occur at app start and the user has to actively click the Go button;  'Enabled': An initial load of data occurs automatically after start  (list is visible without pressing the GO Button)."
+                  },
+                  "tables": {
+                    "type": "array",
+                    "description": "lists expected in user input",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "baseEntityType": {
+                          "type": "string",
+                          "description": "base entity type for the list"
+                        },
+                        "columns": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "propertyPath based on baseEntityType"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "columns",
+                        "baseEntityType"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "filters",
+                  "tables"
+                ],
+                "additionalProperties": false
+              },
+              "objectPageContent": {
+                "type": "object",
+                "properties": {
+                  "sections": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "description": "name of section or field group as defined in user input"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "isTableSection": {
+                          "type": "boolean",
+                          "description": "if true, 'fields' represent columns of the table section and propertyPaths need to start with 1:n association"
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "propertyPath"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "id",
+                        "fields"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "tabs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "description": "tab in app based on the user input, cannot be empty. If not provided, equals the section name"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "subsections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "list of sections ids relevant for the tab"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "id",
+                        "subsections"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "sections",
+                  "tabs"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "entityType"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "name",
+        "pages"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "application"
+  ],
+  "additionalProperties": false
+}
+```
+
+Output ONLY the json contents and try to be as accurate as comprehensive as possible.
+
+Remarks: 
+ - "propertyPaths" can be properties of the base entity or an associated entity, the latter denoted as "<associationName>/<propertyName>"
+
+<UserInput>
+Create an app with List of Request and Item Information
+</UserInput>
+
+----------Response:----------
+{
+  "application": {
+    "name": "List of Request and Item Information",
+    "pages": [
+      {
+        "type": "ListReport",
+        "entityType": "Requests",
+        "listReportContent": {
+          "filters": [],
+          "loadDataOnAppLaunch": "Auto",
+          "tables": [
+            {
+              "title": "Requests",
+              "id": "Requests",
+              "baseEntityType": "Requests",
+              "columns": [
+                "requestId",
+                "requestName",
+                "requestDate"
+              ]
+            },
+            {
+              "title": "Items",
+              "id": "Items",
+              "baseEntityType": "Items",
+              "columns": [
+                "itemId",
+                "itemName"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "ObjectPage",
+        "entityType": "Requests",
+        "objectPageContent": {
+          "sections": [
+            {
+              "title": "Requests",
+              "id": "Requests",
+              "isTableSection": false,
+              "fields": [
+                "requestId",
+                "requestName",
+                "requestDate"
+              ]
+            },
+            {
+              "title": "Items",
+              "id": "Items",
+              "isTableSection": true,
+              "fields": [
+                "Items/itemId",
+                "Items/itemName"
+              ]
+            }
+          ],
+          "tabs": [
+            {
+              "title": "Requests",
+              "id": "Requests",
+              "subsections": [
+                "Requests"
+              ]
+            },
+            {
+              "title": "Items",
+              "id": "Items",
+              "subsections": [
+                "Items"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+2024-06-14T00:32:32.732Z [info] Step "ifCodeListsPresent": case 0 blocked! Evaluation details:
+ - JSONPath "$.model.entities[*].elements[*].values[*]" : []
+2024-06-14T00:32:37.816Z [info] 
+==========LLM call for data generation:==========
+
+For the following list of entities, create data for the empty CSV files.
+Entity "Requests" - Properties:
+    requestId: String(50), Unique identifier for each request
+    requestName: String(50), Name of the request
+    requestDate: Date, Date of the request
+
+Entity "Items" - Properties:
+    itemId: String(50), Unique identifier for each item
+    itemName: String(50), Name of the item
+    request_requestId: String(50), requestId of associated Requests
+
+Empty CSV files in json format (only generate content for these files!):
+{"Requests.csv":"requestId;requestName;requestDate","Items.csv":"itemId;itemName;request_requestId"}
+
+Rules:
+    - Take over the given header line, do not invent new columns!
+    - For a given file, add rows, add '\n' characters before each row but don't break the JSON string
+    - Do not generate rows with same key values, they must be unique!
+    - Make sure that associations match, i.e. a field containing "Name of the associated Customer" must contain an existing Name of entity Customer
+    - Always use ";" as a delimiter in CSV files
+    - The result must be proper JSON format so it can be parsed, don't break JSON strings within, don't add quotes around values.
+    - Create about 5 rows for the first csv, 7 for the second and so on
+    - All values must be realistic with meaningful content, e.g. 'Laptop Screen' and not just placeholder values with incremented numbers like 'Product 1', 'Product 2' etc.
+    
+Use format for values:
+  String(50): string no longer than 50 characters
+  Date: 2021-06-27
+    
+
+Example output (Do NOT include in output!):
+```json
+{"Blogs":"blogID;title;description;createdDateTime;views\nBlog1;Tech Blog;A blog about the latest technology trends.;2023-06-27T14:52:23Z;1000\nBlog2;Fashion Blog;Explore the world of fashion and style.;2023-06-27T14:52:23Z;500","Posts":"postID;title;content;publishDate;likes;comments;blogID\n1;The Future of Artificial Intelligence;Artificial intelligence is shaping the future of technology.;2023-06-27;50;10;Blog1
+2;Summer Fashion Trends;Discover the hottest fashion trends for the summer season.;2023-06-27;100;20;Blog2\n3;Must-Have Accessories;10 must-have accessories for the upcoming season;2023-06-27;100;20;Blog2"}
+```
+Output ONLY the json contents for the csv files and try to be as accurate as possible.    
+
+
+
+----------Response:----------
+{"Requests.csv":"requestId;requestName;requestDate\n1;Request 1;2021-06-27\n2;Request 2;2021-06-27\n3;Request 3;2021-06-27\n4;Request 4;2021-06-27\n5;Request 5;2021-06-27","Items.csv":"itemId;itemName;request_requestId\n1;Item 1;1\n2;Item 2;1\n3;Item 3;2\n4;Item 4;2\n5;Item 5;3\n6;Item 6;3\n7;Item 7;4"}

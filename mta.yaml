@@ -1,0 +1,141 @@
+_schema-version: "3.1"
+ID: demoapp
+description: A simple CAP project.
+version: 1.0.0
+modules:
+- name: demoapp-srv
+  type: nodejs
+  path: gen/srv
+  requires:
+  - name: demoapp-db
+  - name: demoapp-auth
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: nodejs_buildpack
+    readiness-health-check-http-endpoint: /health
+    readiness-health-check-type: http
+  build-parameters:
+    builder: npm
+- name: demoapp-db-deployer
+  type: hdb
+  path: gen/db
+  requires:
+  - name: demoapp-db
+  parameters:
+    buildpack: nodejs_buildpack
+- name: demoapp-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: demoapp-destination-service
+    parameters:
+      content-target: true
+  - name: demoapp_html_repo_host
+    parameters:
+      service-key:
+        name: demoapp_html_repo_host-key
+  - name: demoapp-auth
+    parameters:
+      service-key:
+        name: demoapp-auth-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: approute_demoapp_html_repo_host
+          ServiceInstanceName: demoapp-html5-app-host-service
+          ServiceKeyName: demoapp_html_repo_host-key
+          sap.cloud.service: approute
+        - Authentication: OAuth2UserTokenExchange
+          Name: approute_demoapp_auth
+          ServiceInstanceName: demoapp-auth
+          ServiceKeyName: demoapp-auth-key
+          sap.cloud.service: approute
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: demoapp-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: demoapp_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - listofrequestanditeminformation.zip
+      name: listofrequestanditeminformation
+      target-path: resources/
+- name: listofrequestanditeminformation
+  type: html5
+  path: app/listofrequestanditeminformation
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: demoapp-db
+  type: com.sap.xs.hdi-container
+  parameters:
+    config:
+      database_id: 12bc8de7-1dfb-46d3-babc-3111ffda9c9e
+    service: hana
+    service-plan: hdi-shared
+- name: demoapp-auth
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: dedicated
+      xsappname: demoapp-${org}-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+- name: demoapp-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: demoapp-srv-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: ~{srv-api/srv-url}
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: demoapp-destination-service
+    service-plan: lite
+  requires:
+  - name: srv-api
+- name: demoapp_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: demoapp-html5-app-host-service
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm ci
+    - npx cds build --production

@@ -1,0 +1,180 @@
+{
+    "namespace": "myApp",
+    "entities": [
+        {
+            "name": "Requests",
+            "label": "Request",
+            "associations": [
+                {
+                    "name": "Items",
+                    "target": "Items",
+                    "multiplicity": "many",
+                    "backAssociation": "request",
+                    "selfContained": false
+                }
+            ],
+            "labelPlural": "Requests",
+            "elements": [
+                {
+                    "name": "ID",
+                    "type": "UUID",
+                    "key": true,
+                    "label": ""
+                },
+                {
+                    "name": "requestId",
+                    "type": "String(50)",
+                    "label": "Request Id",
+                    "additionalInfo": "Unique identifier for each request",
+                    "essentialElement": true,
+                    "semanticKey": true,
+                    "values": [],
+                    "hasFixedValuesList": false
+                },
+                {
+                    "name": "requestName",
+                    "type": "String(50)",
+                    "label": "Request Name",
+                    "additionalInfo": "Name of the request",
+                    "essentialElement": true,
+                    "values": [],
+                    "hasFixedValuesList": false
+                },
+                {
+                    "name": "requestDate",
+                    "type": "Date",
+                    "label": "Request Date",
+                    "additionalInfo": "Date of the request",
+                    "essentialElement": true,
+                    "values": [],
+                    "hasFixedValuesList": false
+                }
+            ]
+        },
+        {
+            "name": "Items",
+            "label": "Item",
+            "associations": [
+                {
+                    "name": "request",
+                    "target": "Requests",
+                    "multiplicity": "one"
+                }
+            ],
+            "labelPlural": "Items",
+            "elements": [
+                {
+                    "name": "ID",
+                    "type": "UUID",
+                    "key": true,
+                    "label": ""
+                },
+                {
+                    "name": "itemId",
+                    "type": "String(50)",
+                    "label": "Item Id",
+                    "additionalInfo": "Unique identifier for each item",
+                    "essentialElement": true,
+                    "semanticKey": true,
+                    "values": [],
+                    "hasFixedValuesList": false
+                },
+                {
+                    "name": "itemName",
+                    "type": "String(50)",
+                    "label": "Item Name",
+                    "additionalInfo": "Name of the item",
+                    "essentialElement": true,
+                    "values": [],
+                    "hasFixedValuesList": false
+                }
+            ]
+        }
+    ],
+    "service": {
+        "name": "myAppSrv",
+        "path": "srv/service.cds"
+    },
+    "applications": [
+        {
+            "name": "ListofRequestandItemInformation",
+            "pages": [
+                {
+                    "type": "ListReport",
+                    "entityType": "Requests",
+                    "listReportContent": {
+                        "filters": [],
+                        "loadDataOnAppLaunch": "Auto",
+                        "tables": [
+                            {
+                                "title": "Requests",
+                                "id": "Requests",
+                                "baseEntityType": "Requests",
+                                "columns": [
+                                    "requestId",
+                                    "requestName",
+                                    "requestDate"
+                                ]
+                            },
+                            {
+                                "title": "Items",
+                                "id": "Items",
+                                "baseEntityType": "Items",
+                                "columns": [
+                                    "itemId",
+                                    "itemName"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "ObjectPage",
+                    "entityType": "Requests",
+                    "objectPageContent": {
+                        "sections": [
+                            {
+                                "title": "Requests",
+                                "id": "Requests",
+                                "isTableSection": false,
+                                "fields": [
+                                    "requestId",
+                                    "requestName",
+                                    "requestDate"
+                                ]
+                            },
+                            {
+                                "title": "Items",
+                                "id": "Items",
+                                "isTableSection": true,
+                                "fields": [
+                                    "Items/itemId",
+                                    "Items/itemName"
+                                ]
+                            }
+                        ],
+                        "tabs": [
+                            {
+                                "title": "Requests",
+                                "id": "Requests",
+                                "subsections": [
+                                    "Requests"
+                                ]
+                            },
+                            {
+                                "title": "Items",
+                                "id": "Items",
+                                "subsections": [
+                                    "Items"
+                                ]
+                            }
+                        ],
+                        "tableSectionAssociations": [
+                            "Items"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
